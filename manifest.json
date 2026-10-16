@@ -1,0 +1,149 @@
+{
+  "id": "quarantine-release",
+  "name": "Quarantine Release",
+  "version": "1.3.0",
+  "author": "dealerweb",
+  "description": "Delivers mail from a quarantine account to its original recipients again, with the subject as the sender wrote it and without the spam headers.",
+  "type": "ui-extension",
+  "tier": "privileged",
+  "minAppVersion": "1.15.0",
+  "permissions": [
+    "crypto:full",
+    "email:read",
+    "email:write",
+    "email:blob-read",
+    "email:raw-send",
+    "email:render-takeover",
+    "identity:read",
+    "account:read",
+    "ui:email-banner",
+    "admin:config"
+  ],
+  "entrypoint": "index.js",
+  "configSchema": {
+    "quarantineAccount": {
+      "type": "string",
+      "label": "Quarantine accounts",
+      "description": "Comma-separated addresses of the accounts that hold quarantined mail. The release banner shows only there, and mail goes out with the identity of the account that is open.",
+      "placeholder": "quarantine@example.com, quarantine@example.org",
+      "required": true
+    },
+    "allowedDomains": {
+      "type": "string",
+      "label": "Allowed recipient domains",
+      "description": "Comma-separated. Only recipients in these domains can be picked, typed ones included (exact match, subdomains do not count).",
+      "placeholder": "example.com, example.org",
+      "required": true
+    },
+    "recipientHeaders": {
+      "type": "string",
+      "label": "Recipient headers",
+      "description": "Comma-separated, checked in this order: the first header with addresses wins. To, Cc and Delivered-To are never used.",
+      "default": "X-Assp-Intended-For, X-Envelope-To, X-Original-To, Envelope-To"
+    },
+    "tagHeader": {
+      "type": "string",
+      "label": "Subject tag header",
+      "description": "When its value stands as \"[value] \" in front of the subject, delivery removes it, so the subject is the original again and a DKIM signature over it still verifies.",
+      "default": "X-Assp-Tag"
+    },
+    "removeHeaders": {
+      "type": "string",
+      "label": "Headers to remove",
+      "description": "Comma-separated; a trailing * matches every header starting with it. These headers are removed before delivery.",
+      "default": "X-Assp-*, X-Spam-*, X-Original-Authentication-Results, Authentication-Results, Delivered-To, Return-Path"
+    },
+    "releasedKeyword": {
+      "type": "string",
+      "label": "Keyword after release",
+      "description": "Set on released mail; releasing it again asks first. A tag keyword such as $label:released shows in the message list once a tag with that id exists.",
+      "default": "$label:released"
+    },
+    "allowManualRecipients": {
+      "type": "boolean",
+      "label": "Manual recipients",
+      "description": "Without a recipient header, an address can be typed in (allowed domains only).",
+      "default": true
+    },
+    "trashAfterRelease": {
+      "type": "boolean",
+      "label": "Move to trash after release",
+      "description": "Moves the mail into the quarantine account's trash once the server has accepted every recipient.",
+      "default": true
+    }
+  },
+  "locales": {
+    "de": {
+      "bannerTitle": "Quarantäne",
+      "alreadyReleased": "Freigegeben",
+      "domainNotAllowed": "Domain nicht erlaubt",
+      "noRecipientHeader": "Kein Empfänger-Header gefunden",
+      "manualPlaceholder": "Empfänger-Adresse",
+      "manualNotAllowed": "Nicht erlaubt: {addresses}",
+      "noAllowedDomains": "Es sind keine Empfänger-Domains erlaubt. Eine Freigabe ist erst möglich, wenn ein Administrator sie in der Plugin-Konfiguration einträgt.",
+      "noIdentity": "Für {account} gibt es keine Absender-Identität, daher ist keine Freigabe möglich.",
+      "releaseButton": "Erneut zustellen",
+      "releasing": "Wird zugestellt …",
+      "confirmTitle": "Erneut zustellen?",
+      "confirmMessage": "Die Mail geht ohne Quarantäne-Kennzeichnung an {recipients}.",
+      "confirmAgainTitle": "Bereits freigegeben",
+      "confirmAgainMessage": "Diese Mail wurde schon freigegeben. Trotzdem noch einmal an {recipients} zustellen?",
+      "confirmLabel": "Zustellen",
+      "cancelLabel": "Abbrechen",
+      "released": "An {recipients} zugestellt.",
+      "releasedAndTrashed": "An {recipients} zugestellt und hier in den Papierkorb verschoben.",
+      "partlyRejected": "Zugestellt, aber diese Empfänger wurden abgelehnt: {rejected}",
+      "resultUnclear": "Keine Antwort vom Server, die Zustellung läuft womöglich noch. Bitte prüfen Sie beim Empfänger, ob die Mail angekommen ist, bevor Sie erneut zustellen.",
+      "releaseFailed": "Zustellung fehlgeschlagen: {error}",
+      "noBlob": "Die Mail konnte nicht geladen werden. Bitte öffnen Sie sie erneut.",
+      "markFailed": "Die Markierung als freigegeben ist fehlgeschlagen: {error}",
+      "trashFailed": "Die Mail konnte hier nicht in den Papierkorb verschoben werden: {error}",
+      "loadFailed": "Die Quarantäne-Einstellungen konnten nicht geladen werden: {error}",
+      "intendedForOne": "Ursprünglich an {address}",
+      "intendedForMany": "Ursprünglich an {count} Empfänger",
+      "intendedSource": "Ermittelt aus {header}. Zugestellt wird ohne Betreff-Kennzeichnung und Spam-Header.",
+      "someNotAllowed": "Durchgestrichen: Domain nicht erlaubt.",
+      "manualHint": "Empfänger von Hand eingeben, erlaubt sind: {domains}",
+      "noManual": "Ohne Empfänger-Header ist keine Freigabe möglich.",
+      "quarantineAccountChip": "Quarantäne-Konto",
+      "quarantineAccountHint": "Durchgestrichen: ein Quarantäne-Konto, dorthin wird nicht zugestellt.",
+      "mismatch": "Die geladene Mail passt nicht zur angezeigten, deshalb wurde nichts zugestellt."
+    },
+    "en": {
+      "bannerTitle": "Quarantine",
+      "alreadyReleased": "Released",
+      "domainNotAllowed": "Domain not allowed",
+      "noRecipientHeader": "No recipient header found",
+      "manualPlaceholder": "Recipient address",
+      "manualNotAllowed": "Not allowed: {addresses}",
+      "noAllowedDomains": "No recipient domains are allowed. Releasing works once an administrator adds them to the plugin configuration.",
+      "noIdentity": "There is no sender identity for {account}, so this message cannot be released.",
+      "releaseButton": "Deliver again",
+      "releasing": "Delivering …",
+      "confirmTitle": "Deliver again?",
+      "confirmMessage": "The message goes to {recipients} without the quarantine markings.",
+      "confirmAgainTitle": "Already released",
+      "confirmAgainMessage": "This message has already been released. Deliver it to {recipients} once more?",
+      "confirmLabel": "Deliver",
+      "cancelLabel": "Cancel",
+      "released": "Delivered to {recipients}.",
+      "releasedAndTrashed": "Delivered to {recipients} and moved to the trash here.",
+      "partlyRejected": "Delivered, but these recipients were rejected: {rejected}",
+      "resultUnclear": "No answer from the server, the delivery may still be running. Check with the recipient that the message arrived before delivering it again.",
+      "releaseFailed": "Delivery failed: {error}",
+      "noBlob": "The message could not be loaded. Please open it again.",
+      "markFailed": "Marking the message as released failed: {error}",
+      "trashFailed": "The message could not be moved to the trash here: {error}",
+      "loadFailed": "The quarantine settings could not be loaded: {error}",
+      "intendedForOne": "Originally for {address}",
+      "intendedForMany": "Originally for {count} recipients",
+      "intendedSource": "Taken from {header}. Delivered without the subject marker and spam headers.",
+      "someNotAllowed": "Struck through: domain not allowed.",
+      "manualHint": "Enter a recipient by hand, allowed domains: {domains}",
+      "noManual": "Without a recipient header this message cannot be released.",
+      "quarantineAccountChip": "Quarantine account",
+      "quarantineAccountHint": "Struck through: a quarantine account, nothing is delivered there.",
+      "mismatch": "The loaded message does not match the one shown, so nothing was delivered."
+    }
+  }
+}
